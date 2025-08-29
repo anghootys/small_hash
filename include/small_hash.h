@@ -86,7 +86,7 @@ typedef struct
  * @return A pointer to a fresh hash table.
  */
 sh_general_status_t sh_create_hash_table(sh_table_options_t *options,
-                                         sh_table_t         *hash_table);
+                                         sh_table_t        **hash_table);
 
 #ifdef LIB_SMALL_HASH
 /** Implementations **/
@@ -97,7 +97,7 @@ sh_general_status_t sh_create_hash_table(sh_table_options_t *options,
  */
 
 inline sh_general_status_t
-sh_create_hash_table(sh_table_options_t *options, sh_table_t *hash_table)
+sh_create_hash_table(sh_table_options_t *options, sh_table_t **hash_table)
 {
   if(options == NULL)
     {
@@ -109,9 +109,9 @@ sh_create_hash_table(sh_table_options_t *options, sh_table_t *hash_table)
       options                     = &_options;
     }
 
-  hash_table = NULL;
+  *hash_table = NULL;
 
-  hash_table = (sh_table_t *)MALLOC(sizeof(sh_table_t));
+  *hash_table = (sh_table_t *)MALLOC(sizeof(sh_table_t));
 
   if(hash_table == NULL)
     return SH_ERR_MALLOC_FAILED;
@@ -119,13 +119,13 @@ sh_create_hash_table(sh_table_options_t *options, sh_table_t *hash_table)
   hash_table = hash_table;
 
   if(options->initial_table_entries <= 0)
-    hash_table->nodes
+    (*hash_table)->nodes
         = (sh_node_t **)MALLOC(INITIAL_TABLE_ENTRIES * sizeof(sh_node_t *));
   else
-    hash_table->nodes = (sh_node_t **)MALLOC(options->initial_table_entries
-                                             * sizeof(sh_node_t *));
+    (*hash_table)->nodes = (sh_node_t **)MALLOC(options->initial_table_entries
+                                                * sizeof(sh_node_t *));
 
-  if(hash_table->nodes == NULL)
+  if((*hash_table)->nodes == NULL)
     {
       return SH_ERR_MALLOC_FAILED;
     }
