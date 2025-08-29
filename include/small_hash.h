@@ -8,8 +8,8 @@
 #define INITIAL_TABLE_ENTRIES 16
 
 /** Error Codes **/
-#define SH_NOERROR 0
-#define SH_ERR_MALLOC_FAILED 1
+#define SH_NOERROR            0
+#define SH_ERR_MALLOC_FAILED  1
 
 /** Type Defines **/
 typedef int sh_general_status_t;
@@ -25,7 +25,7 @@ typedef int sh_general_status_t;
 #include <freertos/task.h>
 
 #define MALLOC(S) pvPortMalloc(S)
-#define FREE(v) vPortFree(V)
+#define FREE(v)   vPortFree(V)
 
 #else
 
@@ -33,7 +33,7 @@ typedef int sh_general_status_t;
 #include <stdlib.h>
 
 #define MALLOC(S) malloc(S)
-#define FREE(V) free(v)
+#define FREE(V)   free(v)
 
 #endif
 
@@ -47,9 +47,10 @@ typedef int sh_general_status_t;
  * value: void pointer to any data user provide for actual key.
  * next: points to the next node in the linked list.
  */
-typedef struct sh_node {
-  const char *key;
-  void *value;
+typedef struct sh_node
+{
+  const char     *key;
+  void           *value;
   struct sh_node *next;
 } sh_node_t;
 
@@ -60,15 +61,17 @@ typedef struct sh_node {
  * nodes: A dynamic array that contains list of hashed keys that refers to
  * sh_node_t
  */
-typedef struct {
+typedef struct
+{
   sh_node_t **nodes;
 } sh_table_t;
 
-typedef struct {
+typedef struct
+{
   int initial_table_entries;
 } sh_table_options_t;
 
-#define SH_DEFAULT_TABLE_OPTIONS {.initial_table_entries = -1}
+#define SH_DEFAULT_TABLE_OPTIONS { .initial_table_entries = -1 }
 
 /** Public APIs **/
 
@@ -83,7 +86,7 @@ typedef struct {
  * @return A pointer to a fresh hash table.
  */
 sh_general_status_t sh_create_hash_table(sh_table_options_t *options,
-                                         sh_table_t *hash_table);
+                                         sh_table_t         *hash_table);
 
 #ifdef LIB_SMALL_HASH
 /** Implementations **/
@@ -93,35 +96,39 @@ sh_general_status_t sh_create_hash_table(sh_table_options_t *options,
  * macro in exactly one place of their program.
  */
 
-inline sh_general_status_t sh_create_hash_table(sh_table_options_t *options,
-                                                sh_table_t *hash_table) {
-  if (options == NULL) {
-    /**
-     * If user does not provide 'options' nor 'SH_DEFAULT_TABLE_OPTIONS', we
-     * initialize 'options' with 'SH_DEFAULT_TABLE_OPTIONS'.
-     */
-    sh_table_options_t _options = SH_DEFAULT_TABLE_OPTIONS;
-    options = &_options;
-  }
+inline sh_general_status_t
+sh_create_hash_table(sh_table_options_t *options, sh_table_t *hash_table)
+{
+  if(options == NULL)
+    {
+      /**
+       * If user does not provide 'options' nor 'SH_DEFAULT_TABLE_OPTIONS', we
+       * initialize 'options' with 'SH_DEFAULT_TABLE_OPTIONS'.
+       */
+      sh_table_options_t _options = SH_DEFAULT_TABLE_OPTIONS;
+      options                     = &_options;
+    }
 
   hash_table = NULL;
 
   hash_table = (sh_table_t *)MALLOC(sizeof(sh_table_t));
 
-  if (hash_table == NULL) return SH_ERR_MALLOC_FAILED;
+  if(hash_table == NULL)
+    return SH_ERR_MALLOC_FAILED;
 
   hash_table = hash_table;
 
-  if (options->initial_table_entries <= 0)
-    hash_table->nodes =
-        (sh_node_t **)MALLOC(INITIAL_TABLE_ENTRIES * sizeof(sh_node_t *));
+  if(options->initial_table_entries <= 0)
+    hash_table->nodes
+        = (sh_node_t **)MALLOC(INITIAL_TABLE_ENTRIES * sizeof(sh_node_t *));
   else
-    hash_table->nodes = (sh_node_t **)MALLOC(options->initial_table_entries *
-                                             sizeof(sh_node_t *));
+    hash_table->nodes = (sh_node_t **)MALLOC(options->initial_table_entries
+                                             * sizeof(sh_node_t *));
 
-  if (hash_table->nodes == NULL) {
-    return SH_ERR_MALLOC_FAILED;
-  }
+  if(hash_table->nodes == NULL)
+    {
+      return SH_ERR_MALLOC_FAILED;
+    }
 
   return SH_NOERROR;
 }
