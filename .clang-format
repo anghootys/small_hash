@@ -1,0 +1,49 @@
+# Base style to inherit from
+BasedOnStyle: Google
+
+# # Indentation
+# IndentWidth: 2              # Spaces per indentation level
+# TabWidth: 8                 # Width of tab characters
+# UseTab: Never               # Prefer spaces over tabs for indentation
+#
+# # Line length and wrapping
+# ColumnLimit: 80             # Maximum line length
+# AllowShortFunctionsOnASingleLine: Empty
+# AllowShortIfStatementsOnASingleLine: false
+# AllowShortLoopsOnASingleLine: false
+#
+# # Pointer and reference alignment
+# PointerAlignment: Left      # "int *ptr;" style
+#
+# # Formatting braces and spaces
+# BreakBeforeBraces: GNU      # Brace on next line, GNU style
+# BraceWrapping:
+#   AfterClass: false
+#   AfterControlStatement: true
+#   AfterEnum: false
+#   AfterFunction: true
+#   AfterNamespace: false
+#   BeforeCatch: true
+#   BeforeElse: true
+# IndentCaseLabels: true      # Indent switch case labels
+#
+# # Spaces around operators and keywords
+# SpaceBeforeParens: ControlStatements # Space before parentheses in control statements (if, while)
+# SpaceAfterCStyleCast: true
+# SpacesInParentheses: false
+# SpaceBeforeCpp11BracedList: true
+#
+# # Misc
+# BinPackParameters: false    # One parameter per line for function declarations for readability
+# AlwaysBreakTemplateDeclarations: true
+# ConstructorInitializerIndentWidth: 4 # Slightly larger indent for constructor initializers if relevant
+# SortIncludes: true          # Sort #include directives alphabetically
+#
+# # Comment formatting
+# CommentPragmas: '^ IWYU pragma:' # Example to ignore specific comment pragmas if any
+#
+# # Filetype-specific overrides
+# Language: C                # Explicitly specify C language for better parsing
+# Standard: C11             # Set language standard
+#
+# # Extensions for future customization (can add more here)
