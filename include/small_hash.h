@@ -5,7 +5,7 @@
 
 /** Predefined macros **/
 
-#define INITIAL_TABLE_ENTRIES 16
+#define INITIAL_TABLE_ENTRIES 1024 * 2
 
 /** Error Codes **/
 #define SH_NOERROR            0
@@ -24,8 +24,9 @@ typedef int sh_general_status_t;
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-#define MALLOC(S) pvPortMalloc(S)
-#define FREE(v)   vPortFree(V)
+#define MALLOC(S)       pvPortMalloc(S)
+#define FREE(v)         vPortFree(V)
+#define MEMCPY(D, S, N) memcpy(D, S, N)
 
 #else
 
@@ -36,6 +37,12 @@ typedef int sh_general_status_t;
 #define FREE(V)   free(v)
 
 #endif
+
+/**
+ * Common macros
+ */
+#include <string.h>
+#define MEMCPY(D, S, N) memcpy(D, S, N)
 
 /** structs **/
 
@@ -54,6 +61,11 @@ typedef struct sh_node
   struct sh_node *next;
 } sh_node_t;
 
+typedef struct
+{
+  int initial_table_entries;
+} sh_table_options_t;
+
 /**
  * A hash table struct that can contain meta-data and a linked list to
  * hash table nodes.
@@ -63,15 +75,12 @@ typedef struct sh_node
  */
 typedef struct
 {
-  sh_node_t **nodes;
+  sh_table_options_t *options;
+  sh_node_t         **nodes;
 } sh_table_t;
 
-typedef struct
-{
-  int initial_table_entries;
-} sh_table_options_t;
-
-#define SH_DEFAULT_TABLE_OPTIONS { .initial_table_entries = -1 }
+#define SH_DEFAULT_TABLE_OPTIONS                                              \
+  { .initial_table_entries = INITIAL_TABLE_ENTRIES }
 
 /** Public APIs **/
 
@@ -87,6 +96,14 @@ typedef struct
  */
 sh_general_status_t sh_create_hash_table(sh_table_options_t *options,
                                          sh_table_t        **hash_table);
+
+/**
+ * Free allocated memory in hash table to prevent any chance of memory leaks.
+ *
+ * @param hash_table Refers to the created hash_table in sh_create_hash_table
+ * function.
+ */
+void                sh_clear_hash_table(sh_table_t *hash_table);
 
 #ifdef LIB_SMALL_HASH
 /** Implementations **/
@@ -109,6 +126,9 @@ sh_create_hash_table(sh_table_options_t *options, sh_table_t **hash_table)
       options                     = &_options;
     }
 
+  if(options->initial_table_entries <= 0)
+    options->initial_table_entries = INITIAL_TABLE_ENTRIES;
+
   *hash_table = NULL;
 
   *hash_table = (sh_table_t *)MALLOC(sizeof(sh_table_t));
@@ -118,12 +138,20 @@ sh_create_hash_table(sh_table_options_t *options, sh_table_t **hash_table)
 
   hash_table = hash_table;
 
-  if(options->initial_table_entries <= 0)
-    (*hash_table)->nodes
-        = (sh_node_t **)MALLOC(INITIAL_TABLE_ENTRIES * sizeof(sh_node_t *));
-  else
-    (*hash_table)->nodes = (sh_node_t **)MALLOC(options->initial_table_entries
-                                                * sizeof(sh_node_t *));
+  (*hash_table)->options
+      = (sh_table_options_t *)MALLOC(sizeof(sh_table_options_t));
+
+  if((*hash_table)->options == NULL)
+    return SH_ERR_MALLOC_FAILED;
+
+  /**
+   * Clone options into hash_table meta-data to track e.g: hash_table size,
+   * etc.
+   */
+  MEMCPY((*hash_table)->options, options, sizeof(sh_table_options_t));
+
+  (*hash_table)->nodes = (sh_node_t **)MALLOC(
+      (*hash_table)->options->initial_table_entries * sizeof(sh_node_t *));
 
   if((*hash_table)->nodes == NULL)
     {
@@ -131,6 +159,40 @@ sh_create_hash_table(sh_table_options_t *options, sh_table_t **hash_table)
     }
 
   return SH_NOERROR;
+}
+
+inline void
+sh_clear_hash_table(sh_table_t *hash_table)
+{
+  /**
+   * Ensure that hash_table is a valid hash_table and avoid double free issues.
+   */
+  if(hash_table == NULL)
+    return;
+
+  if(hash_table->nodes != NULL)
+    {
+      for(int i = 0; i < hash_table->options->initial_table_entries; i++)
+        {
+          while(hash_table->nodes[i] != NULL)
+            {
+              sh_node_t *next = hash_table->nodes[i]->next;
+
+              if(hash_table->nodes[i]->value != NULL)
+                free(hash_table->nodes[i]->value);
+              free(hash_table->nodes[i]);
+
+              hash_table->nodes[i] = next;
+            }
+        }
+
+      free(hash_table->nodes);
+    }
+
+  if(hash_table->options != NULL)
+    free(hash_table->options);
+
+  free(hash_table);
 }
 
 #endif
