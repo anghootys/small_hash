@@ -1,6 +1,7 @@
 #ifndef _SMALL_HASH_H_
 #define _SMALL_HASH_H_
 
+#include <sys/types.h>
 #define LIB_SMALL_HASH
 
 /** Predefined macros **/
@@ -87,10 +88,13 @@ typedef struct
 /**
  * Create a fresh hash table.
  *
- * @param initial_table_entries Refers to the initial table size; If -1, it
- * lookups for INITIAL_TABLE_ENTRIES macro's value and initializes 'nodes'
- * dynamic array with initial size of `initial_table_entries *
- * sizeof(sh_table_t)`.
+ * @param options Refers to the options of hash table that contains initial
+ * table size; If -1, it lookups for INITIAL_TABLE_ENTRIES macro's value and
+ * initializes 'nodes' dynamic array with initial size of
+ * `initial_table_entries * sizeof(sh_table_t)`.
+ *
+ * @param hash_table A reference to a sh_table_t pointer. It would assigned to
+ * the created hash_table.
  *
  * @return A pointer to a fresh hash table.
  */
@@ -104,6 +108,36 @@ sh_general_status_t sh_create_hash_table(sh_table_options_t *options,
  * function.
  */
 void                sh_clear_hash_table(sh_table_t *hash_table);
+
+/**
+ * Set a value in hash map. If key exists, it would update value(first free
+ * previous value and then assign new value)
+ *
+ * @param hash_table Refers to the hash map created in sh_created_hash_table
+ * function.
+ *
+ * @param key Key string
+ *
+ * @param value Refers to any heap allocated memory value that has been cast
+ * into (void *).
+ *
+ */
+void      sh_set(sh_table_t *hash_table, const char *key, void *value);
+
+/**
+ * Finds value based on provided key in hash table.
+ *
+ * @param hash_table Refers to the hash map created in sh_created_hash_table
+ * function.
+ *
+ * @param key Key searching for in hash table.
+ *
+ * @return NULL if hash table does not contain any entity with provided key,
+ * otherwise it returns value of entity stored in the hash map.
+ */
+void     *sh_get(sh_table_t *hash_table, const char *key);
+
+u_int32_t pv_sh_polynominal_rolling_hash(const char *key, u_int32_t mod);
 
 #ifdef LIB_SMALL_HASH
 /** Implementations **/
@@ -193,6 +227,34 @@ sh_clear_hash_table(sh_table_t *hash_table)
     free(hash_table->options);
 
   free(hash_table);
+}
+
+inline u_int32_t
+pv_sh_polynominal_rolling_hash(const char *key, u_int32_t mod)
+{
+  u_int32_t hash  = 0;
+  u_int32_t prime = 31;
+  u_int32_t power = 1;
+
+  for(const char *c = key; *c != '\0'; c++)
+    {
+      hash  = (hash + (*c) * power) % mod;
+      power = (power * prime) % mod;
+    }
+
+  return hash;
+}
+
+inline void
+sh_set(sh_table_t *hash_table, const char *key, void *value)
+{
+}
+
+inline void *
+sh_get(sh_table_t *hash_table, const char *key)
+{
+
+  return (void *)NULL;
 }
 
 #endif
