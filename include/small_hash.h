@@ -192,6 +192,12 @@ sh_create_hash_table(sh_table_options_t *options, sh_table_t **hash_table)
       return SH_ERR_MALLOC_FAILED;
     }
 
+  /**
+   * Any node memory should initialize to NULL
+   */
+  for(int i = 0; i < (*hash_table)->options->initial_table_entries; i++)
+    (*hash_table)->nodes[i] = NULL;
+
   return SH_NOERROR;
 }
 
@@ -248,13 +254,60 @@ pv_sh_polynominal_rolling_hash(const char *key, u_int32_t mod)
 inline void
 sh_set(sh_table_t *hash_table, const char *key, void *value)
 {
+  const u_int32_t hash = pv_sh_polynominal_rolling_hash(
+      key, hash_table->options->initial_table_entries);
+
+  sh_node_t *prev_node = hash_table->nodes[hash];
+  sh_node_t *curr_node = hash_table->nodes[hash];
+
+  while(curr_node != NULL && strcmp(prev_node->key, key) != 0)
+    {
+      prev_node = curr_node;
+      curr_node = curr_node->next;
+    }
+
+  if(prev_node != NULL && strcmp(prev_node->key, key) == 0)
+    {
+      /**
+       * Update node
+       */
+      free(prev_node->value);
+      prev_node->value = value;
+    }
+  else if(curr_node == NULL)
+    {
+      /**
+       * Insert new node into tail of linked list
+       */
+
+      sh_node_t *new_node = (sh_node_t *)malloc(sizeof(sh_node_t));
+
+      new_node->key       = key;
+      new_node->value     = value;
+      new_node->next      = NULL;
+
+      if(prev_node != NULL)
+        prev_node->next = new_node;
+      else
+        hash_table->nodes[hash] = new_node;
+    }
 }
 
 inline void *
 sh_get(sh_table_t *hash_table, const char *key)
 {
 
-  return (void *)NULL;
+  const u_int32_t hash = pv_sh_polynominal_rolling_hash(
+      key, hash_table->options->initial_table_entries);
+
+  sh_node_t *node = hash_table->nodes[hash];
+  while(node != NULL && strcmp(node->key, key) != 0)
+    node = node->next;
+
+  if(node == NULL)
+    return (void *)NULL;
+  else
+    return node->value;
 }
 
 #endif
