@@ -22,4 +22,4 @@ test:
 
 clean:
 	rm -rf ./bin/tests
-	mkdir ./bin/tests
+	mkdir -p ./bin/tests
